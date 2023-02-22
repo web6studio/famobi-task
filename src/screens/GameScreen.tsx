@@ -1,46 +1,60 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-// import useGame from '../hooks/useGame';
+import { View, ScrollView, StyleSheet, Text } from 'react-native';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import Image from 'react-native-fast-image';
+import { Colors, Fonts } from '../styles';
+import useGame from '../hooks/useGame';
+import Spinner from '../components/Spinner';
 
 const GameScreen = () => {
-  const route = useRoute();
-  // const { data, isLoading, isSuccess } = useGame(route.params?.id);
-  // TODO: add typings
-  console.log(route.params);
+  const route = useRoute<RouteProp<NavigationParams, 'GameScreen'>>();
+  const { data, isLoading, isSuccess } = useGame(route.params.id);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.container}>Loading...</Text>
-      {/* {isLoading && (
-        <React.Fragment>
-          <Text>Loading...</Text>
-        </React.Fragment>
-      )}
+    <ScrollView style={styles.container}>
       {isSuccess && (
-        <View style={styles.item}>
+        <View style={styles.wrapper}>
+          <Image
+            style={styles.image}
+            source={{ uri: data.thumbnail }}
+            resizeMode={Image.resizeMode.cover}
+          />
           <Text style={styles.title}>{data.title}</Text>
+          <Text style={styles.info}>Platform: {data.platform}</Text>
+          <Text style={styles.info}>Genre/Tag: {data.genre}</Text>
+          <Text style={styles.text}>{data.description}</Text>
         </View>
-      )} */}
-    </View>
+      )}
+      {isLoading && <Spinner />}
+    </ScrollView>
   );
 };
 
-// TODO: styling
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
-  item: {
-    backgroundColor: '#FFF',
+  wrapper: {
+    flex: 1,
     padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
+  },
+  image: {
+    width: '100%',
+    height: 206,
   },
   title: {
-    color: '#000',
-    fontSize: 32,
+    color: Colors.heading,
+    fontSize: 20,
+    fontWeight: '500',
+    paddingVertical: 12,
   },
+  info: {
+    color: Colors.heading,
+    fontSize: 15,
+    paddingBottom: 12,
+  },
+  text: Fonts.text,
 });
 
 export default GameScreen;

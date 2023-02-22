@@ -1,76 +1,71 @@
-import React from 'react';
-import { View, FlatList, StyleSheet, Text, Pressable } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { Colors } from '../styles';
+import { buildFilterQueryParams } from '../utils';
+import { CARD_HEIGHT } from '../constants';
+import Header from '../components/Header';
+import Card from '../components/Card';
+import Spinner from '../components/Spinner';
 import useGames from '../hooks/useGames';
 
-export type MainStackParamList = {
-  GameScreen: { id: string } | undefined;
-};
-
-// TODO: refactoring
-const Header = () => (
-  <View style={styles.header}>
-    <Text style={styles.title}>Free-To-Play Games</Text>
-  </View>
-);
-
 const MainScreen = () => {
-  const { data, isLoading, isSuccess } = useGames();
-  const navigation = useNavigation<NavigationProp<MainStackParamList>>();
+  const navigation = useNavigation<NavigationProp<NavigationParams>>();
+  const [filters, setFilters] = useState({
+    platform: 'all',
+    sort: 'relevance',
+    category: 'all',
+  });
+  const { data, isLoading, isSuccess } = useGames(
+    buildFilterQueryParams(filters),
+  );
+
+  const navigate = (id: string, title: string) =>
+    navigation.navigate('GameScreen', { id, title });
+
+  const handleFilterChange = (updatedFilters: Filters) => {
+    setFilters(updatedFilters);
+  };
+
+  const renderItem = useCallback(
+    ({ item }: { item: Item }) => (
+      <Card item={item} onClick={() => navigate(item.id, item.title)} />
+    ),
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return (
     <View style={styles.container}>
-      {isLoading && (
-        // TODO: Add spinner
-        <React.Fragment>
-          <Text>Loading...</Text>
-        </React.Fragment>
-      )}
+      <Header filters={filters} onFiltersChange={handleFilterChange} />
       {isSuccess && (
-        // TODO: Optimization
         <FlatList
           data={data}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() =>
-                navigation.navigate('GameScreen', {
-                  id: item.id,
-                })
-              }>
-              <View style={styles.item}>
-                <Text style={styles.title}>{item.title}</Text>
-              </View>
-            </Pressable>
-          )}
-          ListHeaderComponent={<Header />}
-          stickyHeaderIndices={[0]}
+          renderItem={renderItem}
+          style={styles.list}
           keyExtractor={item => item.id}
+          // optimization: https://reactnative.dev/docs/optimizing-flatlist-configuration
+          maxToRenderPerBatch={20}
+          initialNumToRender={20}
+          windowSize={41}
+          getItemLayout={(_, index) => ({
+            length: CARD_HEIGHT,
+            offset: CARD_HEIGHT * index,
+            index,
+          })}
         />
       )}
+      {isLoading && <Spinner />}
     </View>
   );
 };
 
-// TODO: styling
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#272b30',
+    backgroundColor: Colors.background,
   },
-  header: {
-    padding: 5,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-  },
-  item: {
-    backgroundColor: '#FFF',
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-  },
-  title: {
-    color: '#000',
-    fontSize: 32,
+  list: {
+    paddingVertical: 5,
   },
 });
 

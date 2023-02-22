@@ -1,12 +1,12 @@
 import { useQuery } from 'react-query';
-import { BASE_URL } from '../constants';
+import { BASE_API_URL } from '../constants';
 
-// TODO: Add types, error processing
-const fetchGames = async () => {
-  const res = await fetch(BASE_URL);
+const fetchGames = async (params: string) => {
+  const res = await fetch(`${BASE_API_URL}/games${params}`);
   return res.json();
 };
 
-const useGames = () => useQuery('games', fetchGames);
+const useGames = (params: string) =>
+  useQuery(['games', params], () => fetchGames(params));
 
 export default useGames;
